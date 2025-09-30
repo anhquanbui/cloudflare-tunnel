@@ -1,4 +1,13 @@
-# Cloudflare Tunnel — Multi‑App on One VPS (example.com)
+# Cloudflare Tunnel — Multi-App on One VPS (example.com)
+
+## Introduction
+This guide shows how to put multiple self-hosted apps (Jupyter, VS Code Server, Portainer, and anything else on your VPS) behind **Cloudflare Tunnel** and serve them on friendly subdomains like `jupyter.example.com` and `vscode.example.com` — **without opening any inbound ports** on your server.
+- **What Cloudflare Tunnel does:** a small daemon (`cloudflared`) makes an **outbound-only** connection from your VPS to Cloudflare’s edge. Traffic from the public Internet hits Cloudflare first and is then proxied down the tunnel to your local services.
+- **Why it’s great:** free SSL/TLS, no public firewall holes, works behind NAT/CGNAT, easy to add/remove subdomains, and optional **Zero Trust / Access** for SSO (Google/GitHub/One-time PIN) in front of sensitive dashboards.
+- **What you’ll build:** one tunnel + a single config file (`/etc/cloudflared/config.yml`) that routes multiple hostnames to different local ports (`localhost:8888`, `localhost:12000`, `localhost:9000`, …). You’ll also set up Jupyter to run as a non‑root systemd service.
+- **Service config gotcha:** running `cloudflared` manually reads `~/.cloudflared/config.yml`, while the **systemd service** typically reads `/etc/cloudflared/config.yml`. This guide standardizes on **`/etc/cloudflared/config.yml`** to avoid confusion.
+
+---
 
 ## 0) Prerequisites
 - Cloudflare account (Free plan is fine) and a domain **added to Cloudflare** (nameservers set to Cloudflare).
@@ -49,7 +58,7 @@ ingress:
   - hostname: portainer.example.com
     service: http://localhost:9000
 
-  # B) Portainer HTTPS 9443 (self‑signed)
+  # B) Portainer HTTPS 9443 (self-signed)
   # - hostname: portainer.example.com
   #   service: https://localhost:9443
   #   originRequest:
@@ -78,7 +87,7 @@ cloudflared tunnel route dns <TUNNEL_ID> jupyter.example.com
 cloudflared tunnel route dns <TUNNEL_ID> vscode.example.com
 cloudflared tunnel route dns <TUNNEL_ID> portainer.example.com
 ```
-> If you prefer a wildcard CNAME (`*.example.com → <TUNNEL_ID>.cfargotunnel.com`), you can skip per‑subdomain DNS routes.
+> If you prefer a wildcard CNAME (`*.example.com → <TUNNEL_ID>.cfargotunnel.com`), you can skip per-subdomain DNS routes.
 
 ---
 
@@ -141,7 +150,7 @@ curl -I https://portainer.example.com
 
 ---
 
-## 8) JupyterLab under a non‑root user (recommended)
+## 8) JupyterLab under a non-root user (recommended)
 
 **Create venv & install Jupyter:**
 ```bash
